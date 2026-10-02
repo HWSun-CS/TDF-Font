@@ -1,0 +1,19 @@
+# Core deep learning framework
+# Note: Install PyTorch separately based on your CUDA version
+# For CUDA 12.1: conda install pytorch torchvision pytorch-cuda=12.1 -c pytorch -c nvidia
+# For CPU: conda install pytorch torchvision cpuonly -c pytorch
+
+# Essential packages
+numpy
+PyYAML
+imageio
+scikit-image
+scikit-learn
+tqdm
+matplotlib
+pandas
+
+# Optional (for evaluation metrics)
+lpips
+pytorch-fid
+scipy
