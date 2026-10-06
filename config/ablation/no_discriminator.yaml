@@ -1,0 +1,158 @@
+mode: student_temporal
+
+# Teacher model checkpoint path (required for distillation)
+teacher_checkpoint: teacher/teacher.tar
+
+env:
+  PYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:256
+
+dataset_params:
+  root_dir: data/
+  frame_shape:
+  - 256
+  - 256
+  - 3
+  id_sampling: false
+  use_last_frame_as_style: true
+  style_from_same_font: true
+  font_prefix: null
+  use_mid_frame: true
+
+model_params:
+  common_params:
+    num_kp: 20
+    num_channels: 3
+    estimate_jacobian: true
+    style_dim: 128
+  kp_detector_params:
+    temperature: 0.1
+    block_expansion: 32
+    max_features: 1024
+    scale_factor: 0.25
+    num_blocks: 5
+    single_jacobian_map: true
+  generator_params:
+    block_expansion: 64
+    max_features: 512
+    num_down_blocks: 2
+    num_bottleneck_blocks: 6
+    estimate_occlusion_map: true
+    dense_motion_params:
+      block_expansion: 64
+      max_features: 1024
+      num_blocks: 5
+      scale_factor: 0.25
+  # Kept for checkpoint/config compatibility, but it is not instantiated when
+  # train_params.use_discriminator is false.
+  discriminator_params:
+    scales:
+    - 1
+    - 0.5
+    - 0.25
+    block_expansion: 32
+    max_features: 512
+    num_blocks: 4
+    sn: true
+    num_fonts: 50
+
+train_params:
+  use_teacher_generator: false
+  use_discriminator: false
+  num_epochs: 30
+  batch_size: 21
+  num_workers: 0
+  prefetch_factor: 1
+  persistent_workers: false
+  detach_kp_for_generator: true
+  scales:
+  - 1.0
+  checkpoint_freq: 3
+  epoch_milestones:
+  - 0
+  memory_log_interval: 50
+  lr_generator: 0.0003
+  lr_discriminator: 0.0003
+  lr_generator_finetune: 0.0003
+  lr_style_encoder: 0.0003
+  lr_style_kp_head: 0.0003
+  lr_style_classifier: 0.0003
+  loss_weights:
+    generator_gan: 0
+    discriminator_gan: 0
+    feature_matching:
+    - 0
+    - 0
+    - 0
+    - 0
+    perceptual:
+    - 10
+    - 10
+    - 10
+    - 10
+    - 10
+    l1: 0
+    tv: 0
+    pred_distill: 0
+    flow_distill: 0
+    occ_distill: 0
+    kp_value_reg: 1.0
+    kp_jac_reg: 0.5
+    kp_equiv: 0
+    mid_keypoint: 1.0
+  transform_params:
+    sigma_affine: 0.0
+    sigma_tps: 0.0
+    points_tps: 0
+
+style_encoder:
+  ckpt_path: null
+  freeze: false
+  img_size: 64
+  normalize: false
+  style_dim: 128
+  backbone: vgg11
+
+font_student:
+  num_fonts: 50
+  font_cls_weight: 0.7
+  font_center_weight: 0.0
+  use_mid_supervision: true
+  lambda_mid: 1.0
+  mid_supervision_type: keypoint
+  mid_kp_value_weight: 1.0
+  mid_kp_jacobian_weight: 0.5
+  transformer:
+    d_model: 256
+    nhead: 4
+    num_layers: 4
+    dim_feedforward: 1024
+    dropout: 0.1
+    use_delta_jac: true
+
+reconstruction_params:
+  num_videos: 200
+  format: .mp4
+
+animate_params:
+  num_pairs: 100
+  format: .mp4
+  normalization_params:
+    adapt_movement_scale: false
+    use_relative_movement: true
+    use_relative_jacobian: true
+
+visualizer_params:
+  kp_size: 5
+  draw_border: true
+  colormap: gist_rainbow
+
+teacher_copy_freeze: true
+fine_tune_generator: true
+
+flow_distill_schedule:
+  trigger_lambda: 2
+  start: 20
+  end: 5
+
+kp_equiv:
+  sigma_affine: 0.0
